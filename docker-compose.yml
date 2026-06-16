@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+
+  # ── Nginx : seul point d'entrée depuis l'extérieur ──────
+  nginx:
+    image: nginx:alpine
+    container_name: mystore-nginx
+    ports:
+      - "8080:80"          # localhost:8080 → Nginx:80
+      # (on évite le port 80 qui nécessite sudo sur Linux/Mac)
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # ── API Express ──────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: mystore-api
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    # PAS de ports exposés → accessible uniquement via Nginx
+    # Pour débugger directement : décommenter la ligne ci-dessous
+    # ports:
+    #   - "3000:3000"
+    restart: unless-stopped
+
+# Réseau par défaut créé automatiquement par Compose
+# nginx et api peuvent se parler par leur nom de service
